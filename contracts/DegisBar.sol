@@ -9,7 +9,6 @@ import "./DegisStorage.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-
 contract DegisBar is LibOwnable ,DegisStorage{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -27,13 +26,20 @@ contract DegisBar is LibOwnable ,DegisStorage{
     IERC20 DEGIS_TOKEN;
     IERC20 USDC_TOKEN;
 
+    address degisAddress;
+    address usdcAddress;
+
+
     constructor(address _degisAddress, address _usdcAddress) {
+        degisAddress = _degisAddress;
+        usdcAddress = _usdcAddress;
         DEGIS_TOKEN = IERC20(_degisAddress);
         USDC_TOKEN = IERC20(_usdcAddress);
     }
 
     /// --------------Public Method--------------------------
     function init() external onlyOwner {
+        operator = msg.sender;
         // poolInfo.delegatePercent = 700; // 70%
         maxDigital = 10000; // 0000~9999
         closed = false;
@@ -46,6 +52,7 @@ contract DegisBar is LibOwnable ,DegisStorage{
         // firstDelegateMinValue = 100 ether;
         epochId = 0;
     }
+
 
     // 压注 
     function buy(uint256[] calldata codes, uint256[] calldata amounts) external notClosed {
@@ -85,7 +92,7 @@ contract DegisBar is LibOwnable ,DegisStorage{
             "OUT_OF_MAX_COUNT"
         );
 
-        //transform token
+        // DEGIS_TOKEN.safeTransfer(address(this), totalAmount);
         DEGIS_TOKEN.safeTransferFrom(msg.sender, address(this), totalAmount);
         degisPoolInfo.demandDepositPool = degisPoolInfo.demandDepositPool.add(totalAmount);
 
@@ -251,6 +258,10 @@ contract DegisBar is LibOwnable ,DegisStorage{
         }
     }
 
+    function getUserPrize(address user) external view returns (uint256) {
+        uint256 totalAmount = userInfoMap[user].prize;
+        return totalAmount;
+    }
     /// --------------Private Method--------------------------
 
 
@@ -264,7 +275,7 @@ contract DegisBar is LibOwnable ,DegisStorage{
         private
         view
     {
-        require(tx.origin == msg.sender, "NOT_ALLOW_SMART_CONTRACT");
+        //require(tx.origin == msg.sender, "NOT_ALLOW_SMART_CONTRACT");
         require(
             codes.length == amounts.length,
             "CODES_AND_AMOUNTS_LENGTH_NOT_EUQAL"
@@ -399,31 +410,16 @@ contract DegisBar is LibOwnable ,DegisStorage{
         return false;
     }
 
-    function prizeWithdrawPendingRefund() private returns (bool) {
-        for (; pendingPrizeWithdrawCount > 0; ) {
-            uint256 i = pendingPrizeWithdrawStartIndex;
-            require(
-                pendingPrizeWithdrawMap[i] != address(0),
-                "PRIZE_WITHDRAW_ADDRESS_ERROR"
-            );
-
-            if (gasleft() < minGasLeft) {
-                emit GasNotEnough();
-                return false;
-            }
-
-            if (prizeWithdrawAddress(pendingPrizeWithdrawMap[i])) {
-                pendingPrizeWithdrawStartIndex = pendingPrizeWithdrawStartIndex.add(1);
-                pendingPrizeWithdrawCount = pendingPrizeWithdrawCount.sub(1);
-            } else {
-                return false;
-            }
-        }
-        return true;
-    }
-
     function getBalance(IERC20 token) private view returns(uint256)
     {
         return token.balanceOf(address(this));
+    }
+
+    function getUsdcTokenAddress() public view returns (address) {
+        return usdcAddress;
+    }
+
+    function getDegisTokenAddress() public view returns (address) {
+        return degisAddress;
     }
 }

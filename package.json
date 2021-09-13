@@ -8,7 +8,6 @@
     "@chainlink/contracts": "^0.2.1",
     "@openzeppelin/contracts": "4.1.0",
     "@truffle/contract": "^4.3.26",
-    "@truffle/hdwallet-provider": "^1.4.0",
     "@uniswap/lib": "^5.0.0-alpha",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.7.0",
@@ -29,6 +28,7 @@
   },
   "devDependencies": {
     "@chainlink/test-helpers": "0.0.7-alpha",
+    "@truffle/hdwallet-provider": "^1.5.0",
     "lite-server": "^2.6.1",
     "truffle-plugin-verify": "^0.5.11"
   }
