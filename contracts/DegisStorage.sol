@@ -85,4 +85,6 @@ contract DegisStorage is LibOwnable, Types {
 
     /// @dev address for random number get
     address public randomPrecompileAddress = address(0x262);
+
+    mapping(uint256 => EpochInfo) public epochInfo;
 }
