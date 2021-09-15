@@ -112,12 +112,6 @@ contract DegisBar is LibOwnable ,DegisStorage{
         if (redeemAddress(codes, msg.sender)) {
             return true;
         } else {
-            // for (uint256 n = 0; n < codes.length; n++) {
-            //     pendingRedeemMap[pendingRedeemStartIndex + pendingRedeemCount].user = msg.sender;
-            //     pendingRedeemMap[pendingRedeemStartIndex + pendingRedeemCount].code = codes[n];
-            //     pendingRedeemCount = pendingRedeemCount.add(1);
-            //     pendingRedeemSearchMap[msg.sender][codes[n]] = 1;
-            // }
             emit Redeem(msg.sender, false, codes, 0);
             return false;
         }
@@ -129,11 +123,6 @@ contract DegisBar is LibOwnable ,DegisStorage{
         if (prizeWithdrawAddress(msg.sender)) {
             return true;
         } else {
-            // for (uint256 i = pendingPrizeWithdrawStartIndex; i < pendingPrizeWithdrawStartIndex + pendingPrizeWithdrawCount; i++) {
-            //     require(pendingPrizeWithdrawMap[i] != msg.sender, "ALREADY_WITHDRAWING");
-            // }
-            // pendingPrizeWithdrawMap[pendingPrizeWithdrawStartIndex + pendingPrizeWithdrawCount] = msg.sender;
-            // pendingPrizeWithdrawCount = pendingPrizeWithdrawCount.add(1);
             emit PrizeWithdraw(msg.sender, false, 0);
             return false;
         }
@@ -154,14 +143,14 @@ contract DegisBar is LibOwnable ,DegisStorage{
         genLuckyNumber();
     }
 
-    function setNewEpochId() private 
+    function setNewEpochId() public onlyOperator
     {
         epochId = epochId.add(1);
     }
 
-    function genLuckyNumber() private 
+    function genLuckyNumber() public onlyOperator
     {
-        require(epochInfo[epochId].isUsed == false, "RANDOM_NUMBER_WAS_EXISTED");
+        // require(epochInfo[epochId].isUsed == false, "RANDOM_NUMBER_WAS_EXISTED");
         RANDOM_NUMBER.genRandomNumber(epochId);
     }
 
@@ -289,6 +278,11 @@ contract DegisBar is LibOwnable ,DegisStorage{
             amounts[i] = userInfoMap[user].codeAmountMap[codes[i]];
             // exits[i] = pendingRedeemSearchMap[user][codes[i]];
         }
+    }
+
+    function getEpochId() external view returns(uint256)
+    {
+        return epochId;
     }
 
     function getUserPrize(address user) external view onlyOperator returns (uint256)  {

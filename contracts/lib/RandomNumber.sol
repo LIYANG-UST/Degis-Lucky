@@ -131,15 +131,14 @@ contract RandomNumber is ChainlinkClient, Ownable {
    *  @param _epochId The epoch Id
    */
   function genRandomNumber(uint256 _epochId) 
-    public 
+    public onlyOperator
   {
-
+    
     if(data[_epochId].isUsed == false)
     {
       data[_epochId].isUsed = true;
       data[_epochId].requestStatus = RequestStatus.INIT;
     }
-
     if(data[_epochId].requestStatus == RequestStatus.INIT)
     {
       RequestInfo memory ris;
