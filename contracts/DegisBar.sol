@@ -32,15 +32,6 @@ contract DegisBar is LibOwnable ,DegisStorage{
     address usdcAddress;
     address randomNumberAddress;
 
-    // constructor(address _degisAddress, address _usdcAddress, address _randomNumberAddress) {
-    //     degisAddress = _degisAddress;
-    //     usdcAddress = _usdcAddress;
-    //     randomNumberAddress = _randomNumberAddress;
-
-    //     DEGIS_TOKEN = IERC20(_degisAddress);
-    //     USDC_TOKEN = IERC20(_usdcAddress);
-    //     RANDOM_NUMBER = RandomNumber(_randomNumberAddress);
-    // }
     constructor(address _degisAddress, address _usdcAddress, address _randomNumberAddress) {
         degisAddress = _degisAddress;
         usdcAddress = _usdcAddress;
@@ -50,7 +41,6 @@ contract DegisBar is LibOwnable ,DegisStorage{
         USDC_TOKEN = IERC20(_usdcAddress);
         RANDOM_NUMBER = RandomNumber(_randomNumberAddress);
     }
-
 
     /// --------------Public Method--------------------------
     function init() external onlyOwner {

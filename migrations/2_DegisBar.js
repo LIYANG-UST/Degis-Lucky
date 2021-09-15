@@ -15,5 +15,5 @@ module.exports = async function(deployer, network) {
     await deployer.deploy(RandomNumber, FUJI_LINK_ADDRESS, FUJI_CHAINLINK_ORACLE, URL, PATH)
     await deployer.deploy(DegisToken)
     await deployer.deploy(MockUSD)
-    await deployer.deploy(DegisBar, DegisToken.address, MockUSD.address);
+    await deployer.deploy(DegisBar, DegisToken.address, MockUSD.address, RandomNumber.address);
 };
