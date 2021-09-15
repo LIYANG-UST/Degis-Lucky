@@ -42,6 +42,12 @@ contract Types {
         mapping(address => uint256) refundingSubsidyAmountMap;  //map: address => amount
     }
 
+    struct EpochInfo {
+        uint256 randomNumber;
+        bool isUsed;
+        bool isDrawed;
+    }
+
     event Buy(
         address indexed user,
         uint256 stakeAmount,

@@ -5,6 +5,7 @@ import "./xDegis.sol";
 import "./lib/LibOwnable.sol";
 import "./lib/Types.sol";
 import "./lib/SafeMath.sol";
+import "./lib/RandomNumber.sol";
 import "./DegisStorage.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -25,17 +26,31 @@ contract DegisBar is LibOwnable ,DegisStorage{
 
     IERC20 DEGIS_TOKEN;
     IERC20 USDC_TOKEN;
+    RandomNumber RANDOM_NUMBER;
 
     address degisAddress;
     address usdcAddress;
+    address randomNumberAddress;
 
+    // constructor(address _degisAddress, address _usdcAddress, address _randomNumberAddress) {
+    //     degisAddress = _degisAddress;
+    //     usdcAddress = _usdcAddress;
+    //     randomNumberAddress = _randomNumberAddress;
 
-    constructor(address _degisAddress, address _usdcAddress) {
+    //     DEGIS_TOKEN = IERC20(_degisAddress);
+    //     USDC_TOKEN = IERC20(_usdcAddress);
+    //     RANDOM_NUMBER = RandomNumber(_randomNumberAddress);
+    // }
+    constructor(address _degisAddress, address _usdcAddress, address _randomNumberAddress) {
         degisAddress = _degisAddress;
         usdcAddress = _usdcAddress;
+        randomNumberAddress = _randomNumberAddress;
+
         DEGIS_TOKEN = IERC20(_degisAddress);
         USDC_TOKEN = IERC20(_usdcAddress);
+        RANDOM_NUMBER = RandomNumber(_randomNumberAddress);
     }
+
 
     /// --------------Public Method--------------------------
     function init() external onlyOwner {
@@ -143,15 +158,42 @@ contract DegisBar is LibOwnable ,DegisStorage{
         return true;
     }
 
+    function preSettlement() external onlyOperator 
+    {
+        setNewEpochId();
+        genLuckyNumber();
+    }
+
+    function setNewEpochId() private 
+    {
+        epochId = epochId.add(1);
+    }
+
+    function genLuckyNumber() private 
+    {
+        require(epochInfo[epochId].isUsed == false, "RANDOM_NUMBER_WAS_EXISTED");
+        RANDOM_NUMBER.genRandomNumber(epochId);
+    }
+
+    function setLuckyNumber() private {
+        require(epochInfo[epochId].isUsed == false, "LUCK_NUMBER_WAS_EXISTED");
+        uint256 randomNumber;
+        bool requestStatus;
+        (randomNumber, requestStatus) = RANDOM_NUMBER.getRandomNumber(epochId);
+        require(requestStatus == true, "LUCK_NUMBER_NOT_READY");
+        epochInfo[epochId].randomNumber = randomNumber;
+        epochInfo[epochId].isUsed = requestStatus;
+        epochInfo[epochId].isDrawed = false;
+    }
+
     // 开奖
     function settlement() external onlyOperator  {
         require(closed, "MUST_CLOSE_BEFORE_SETTLEMENT");
-
-        // should use the random number latest
-        epochId = epochId.add(1); 
-        currentRandom = getLuckyNumber();
-
-        require(currentRandom != 0, "RANDOM_NUMBER_NOT_READY");
+        require(epochInfo[epochId].isDrawed == false, "EPOCH_WAS_DRAWED");
+        setLuckyNumber();
+        require(epochInfo[epochId].isUsed == true, "LUCK_NUMBER_NOT_READY");
+        epochInfo[epochId].isDrawed = true;
+        currentRandom = epochInfo[epochId].randomNumber;
 
         uint256 winnerCode = uint256(currentRandom.mod(maxDigital));
 
@@ -198,6 +240,7 @@ contract DegisBar is LibOwnable ,DegisStorage{
         emit RandomGenerate(epochId, currentRandom);
         emit LotteryResult(epochId, winnerCode, prizePool, winners, amounts);
     }
+
 
 
     /// --------------运维--------------------------
@@ -258,19 +301,17 @@ contract DegisBar is LibOwnable ,DegisStorage{
         }
     }
 
-    function getUserPrize(address user) external view returns (uint256) {
+    function getUserPrize(address user) external view onlyOperator returns (uint256)  {
         uint256 totalAmount = userInfoMap[user].prize;
         return totalAmount;
     }
-    /// --------------Private Method--------------------------
 
-
-    // TODO
-    function getLuckyNumber() private pure returns(uint256) {
-        uint256 luckNumber = 9999;
-        return luckNumber;
+    function getLuckyNumber(uint256 _epochId) external view onlyOperator returns (uint256) {
+        require(epochInfo[_epochId].isUsed == true, "LUCK_NUMBER_NOT_READY");
+        return epochInfo[_epochId].randomNumber;
     }
 
+    /// --------------Private Method--------------------------
     function checkBuyValue(uint256[] memory codes, uint256[] memory amounts)
         private
         view

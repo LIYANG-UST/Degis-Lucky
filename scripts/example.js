@@ -96,9 +96,12 @@ module.exports = async callback => {
 
 //Before draw 
 		console.log("Before draw -------------")
-
 		var usePrize = await degisBar.getUserPrize.call(address)
 		console.log("USER Prize",web3.utils.fromWei(usePrize.toString()))
+
+//Prepare
+		degis.preSettlement()
+		await sleep(10000)
 
 //Draw
 		console.log("Draw -------------")
