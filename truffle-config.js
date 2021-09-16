@@ -41,6 +41,7 @@ module.exports = {
           runs: 1000, // Default: 200
         },
       },
+      evmVersion: "byzantium"
     },
   },
 };

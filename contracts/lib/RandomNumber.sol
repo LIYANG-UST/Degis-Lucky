@@ -49,22 +49,22 @@ contract RandomNumber is ChainlinkClient, Ownable {
     setChainlinkToken(_link);
   }
 
-  function changeJobId(bytes32 _jobId) public onlyOperator
+  function changeJobId(bytes32 _jobId) public onlyOwner
   {
       jobId = _jobId;
   }
 
-  function changeOrcaleAddress(address _oracleAddress) public onlyOperator
+  function changeOrcaleAddress(address _oracleAddress) public onlyOwner
   {
       oracleAddress = _oracleAddress;
   }
   
-  function changeUrl(string memory _url) public onlyOperator
+  function changeUrl(string memory _url) public onlyOwner
   {
       url = _url;
   }
 
-  function changePath(string memory _path) public onlyOperator
+  function changePath(string memory _path) public onlyOwner
   {
       path = _path;
   }
@@ -74,27 +74,27 @@ contract RandomNumber is ChainlinkClient, Ownable {
     operator = op;
   }
 
-  function getJobId() public view onlyOperator returns(bytes32)
+  function getJobId() public view  returns(bytes32)
   {
       return jobId;
   }
 
-  function getOrcaleAddress() public view onlyOperator returns(address)
+  function getOrcaleAddress() public view  returns(address)
   {
       return oracleAddress;
   }
 
-  function getUrl() public view onlyOperator returns(string memory)
+  function getUrl() public view  returns(string memory)
   {
       return url;
   }
 
-  function getPath() public view onlyOperator returns(string memory)
+  function getPath() public view  returns(string memory)
   {
       return path;
   }
 
-  function getOperatorAddress() public view onlyOwner returns(address)
+  function getOperatorAddress() public view  returns(address)
   {
       return operator;
   }
@@ -102,7 +102,6 @@ contract RandomNumber is ChainlinkClient, Ownable {
   function getRandomNumber(uint256 epochId) 
     public
     view
-    onlyOperator
     returns (uint256 randomNumber, bool requestStatus)
   {
       if(data[epochId].requestStatus != RequestStatus.COMPLETED)
@@ -133,7 +132,7 @@ contract RandomNumber is ChainlinkClient, Ownable {
   function genRandomNumber(uint256 _epochId) 
     public onlyOperator
   {
-    
+
     if(data[_epochId].isUsed == false)
     {
       data[_epochId].isUsed = true;
@@ -181,7 +180,7 @@ contract RandomNumber is ChainlinkClient, Ownable {
     int256 _times
   )
     private
-    onlyOwner
+    onlyOperator
     returns (bytes32 requestId)
   {
     Chainlink.Request memory req = buildChainlinkRequest(_jobId, address(this), this.fulfill.selector);
@@ -262,7 +261,7 @@ contract RandomNumber is ChainlinkClient, Ownable {
     uint256 _expiration
   )
     public
-    onlyOwner
+    onlyOperator
   {
     cancelChainlinkRequest(_requestId, _payment, _callbackFunctionId, _expiration);
   }
