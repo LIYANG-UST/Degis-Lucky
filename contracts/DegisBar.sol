@@ -55,7 +55,7 @@ contract DegisBar is LibOwnable ,DegisStorage{
         minAmount = 10 ether;
         // minGasLeft = 100000;
         // firstDelegateMinValue = 100 ether;
-        epochId = 0;
+        // epochId = 0;
     }
 
 
@@ -143,14 +143,14 @@ contract DegisBar is LibOwnable ,DegisStorage{
         genLuckyNumber();
     }
 
-    function setNewEpochId() public onlyOperator
+    function setNewEpochId() private onlyOperator
     {
         epochId = epochId.add(1);
     }
 
-    function genLuckyNumber() public onlyOperator
+    function genLuckyNumber() private onlyOperator
     {
-        // require(epochInfo[epochId].isUsed == false, "RANDOM_NUMBER_WAS_EXISTED");
+        require(epochInfo[epochId].isUsed == false, "RANDOM_NUMBER_WAS_EXISTED");
         RANDOM_NUMBER.genRandomNumber(epochId);
     }
 
@@ -225,7 +225,7 @@ contract DegisBar is LibOwnable ,DegisStorage{
     /// --------------运维--------------------------
 
     /// @dev This function is called regularly by the robot every 6 morning to open betting.
-    function open() external onlyOperator {
+    function open() external  onlyOperator {
         closed = false;
     }
 
@@ -283,6 +283,11 @@ contract DegisBar is LibOwnable ,DegisStorage{
     function getEpochId() external view returns(uint256)
     {
         return epochId;
+    }
+
+    function getEpochInfo(uint256 epochId) external view returns(uint256,bool,bool)
+    {
+        return (epochInfo[epochId].randomNumber,epochInfo[epochId].isUsed,epochInfo[epochId].isDrawed);
     }
 
     function getUserPrize(address user) external view onlyOperator returns (uint256)  {
