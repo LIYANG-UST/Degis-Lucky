@@ -10,17 +10,12 @@ import "./DegisStorage.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract DegisBar is LibOwnable ,DegisStorage{
+contract DegisBar is LibOwnable, DegisStorage {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    
+
     modifier notClosed() {
         require(!closed, "GAME_ROUND_CLOSE");
-        _;
-    }
-
-    modifier onlyOperator() {
-        require(msg.sender == operator, "NOT_OPERATOR");
         _;
     }
 
@@ -32,7 +27,14 @@ contract DegisBar is LibOwnable ,DegisStorage{
     address usdcAddress;
     address randomNumberAddress;
 
-    constructor(address _degisAddress, address _usdcAddress, address _randomNumberAddress) {
+    uint256 totalTickets;
+    uint256 totalPrize;
+
+    constructor(
+        address _degisAddress,
+        address _usdcAddress,
+        address _randomNumberAddress
+    ) {
         degisAddress = _degisAddress;
         usdcAddress = _usdcAddress;
         randomNumberAddress = _randomNumberAddress;
@@ -40,27 +42,21 @@ contract DegisBar is LibOwnable ,DegisStorage{
         DEGIS_TOKEN = IERC20(_degisAddress);
         USDC_TOKEN = IERC20(_usdcAddress);
         RANDOM_NUMBER = RandomNumber(_randomNumberAddress);
-    }
 
-    /// --------------Public Method--------------------------
-    function init() external onlyOwner {
         operator = msg.sender;
-        // poolInfo.delegatePercent = 700; // 70%
+
         maxDigital = 10000; // 0000~9999
         closed = false;
-        feeRate = 0;
-        // posPrecompileAddress = address(0xda);
-        // randomPrecompileAddress = address(0x262);
+
         maxCount = 50;
         minAmount = 10 ether;
-        // minGasLeft = 100000;
-        // firstDelegateMinValue = 100 ether;
-        // epochId = 0;
     }
 
-
-    // 压注 
-    function buy(uint256[] calldata codes, uint256[] calldata amounts) external notClosed {
+    // 压注
+    function buy(uint256[] calldata codes, uint256[] calldata amounts)
+        external
+        notClosed
+    {
         checkBuyValue(codes, amounts);
 
         uint256 totalAmount = 0;
@@ -69,14 +65,19 @@ contract DegisBar is LibOwnable ,DegisStorage{
             require(amounts[i] >= minAmount, "Amount is too small");
             require(amounts[i] % minAmount == 0, "AMOUNT_MUST_TIMES_10");
             require(codes[i] < maxDigital, "OUT_OF_MAX_DIGITAL");
-            // require(pendingRedeemSearchMap[msg.sender][codes[i]] == 0, "BUYING_CODE_IS_EXITING");
 
             totalAmount += amounts[i];
 
             if (userInfoMap[msg.sender].codeIndexMap[codes[i]] == 0) {
-                userInfoMap[msg.sender].indexCodeMap[userInfoMap[msg.sender].codeCount] = codes[i];
-                userInfoMap[msg.sender].codeCount = userInfoMap[msg.sender].codeCount + 1; //???令人迷惑
-                userInfoMap[msg.sender].codeIndexMap[codes[i]] = userInfoMap[msg.sender].codeCount;
+                userInfoMap[msg.sender].indexCodeMap[
+                    userInfoMap[msg.sender].codeCount
+                ] = codes[i];
+                userInfoMap[msg.sender].codeCount =
+                    userInfoMap[msg.sender].codeCount +
+                    1; //???令人迷惑
+                userInfoMap[msg.sender].codeIndexMap[codes[i]] = userInfoMap[
+                    msg.sender
+                ].codeCount;
             }
 
             userInfoMap[msg.sender].codeAmountMap[codes[i]] =
@@ -85,28 +86,33 @@ contract DegisBar is LibOwnable ,DegisStorage{
 
             //Save code info
             if (indexCodeMap[codes[i]].addressIndexMap[msg.sender] == 0) {
-                indexCodeMap[codes[i]].indexAddressMap[indexCodeMap[codes[i]].addrCount] = msg.sender;
-                indexCodeMap[codes[i]].addrCount = indexCodeMap[codes[i]].addrCount + 1; //???令人迷惑
-                indexCodeMap[codes[i]].addressIndexMap[msg.sender] = indexCodeMap[codes[i]].addrCount;
+                indexCodeMap[codes[i]].indexAddressMap[
+                    indexCodeMap[codes[i]].addrCount
+                ] = msg.sender;
+                indexCodeMap[codes[i]].addrCount =
+                    indexCodeMap[codes[i]].addrCount +
+                    1; //???令人迷惑
+                indexCodeMap[codes[i]].addressIndexMap[
+                    msg.sender
+                ] = indexCodeMap[codes[i]].addrCount;
             }
         }
 
-        //check weather the maximum number is exceeded 
+        // check weather the maximum number is exceeded
+        // 每个用户限制最大数量
         require(
             userInfoMap[msg.sender].codeCount <= maxCount,
             "OUT_OF_MAX_COUNT"
         );
 
-        // DEGIS_TOKEN.safeTransfer(address(this), totalAmount);
         DEGIS_TOKEN.safeTransferFrom(msg.sender, address(this), totalAmount);
-        degisPoolInfo.demandDepositPool = degisPoolInfo.demandDepositPool.add(totalAmount);
+        totalTickets += totalAmount;
 
         emit Buy(msg.sender, totalAmount, codes, amounts);
     }
 
     // 退注
-    function redeem(uint256[] memory codes) external notClosed returns (bool)
-    {
+    function redeem(uint256[] memory codes) external notClosed returns (bool) {
         checkRedeemValue(codes);
 
         if (redeemAddress(codes, msg.sender)) {
@@ -128,29 +134,28 @@ contract DegisBar is LibOwnable ,DegisStorage{
         }
     }
 
-    // 保险收益进入奖池
-    function prizeIncome(uint256 totalAmount) external onlyOperator returns(bool)
-    {
-        USDC_TOKEN.safeTransferFrom(msg.sender, address(this), totalAmount);
-        usdcPoolInfo.prizePool = usdcPoolInfo.prizePool.add(totalAmount);
-        emit PrizeIncome(msg.sender, totalAmount);
+    // 手动添加奖励
+    function prizeIncome(uint256 _amount) external onlyOwner returns (bool) {
+        USDC_TOKEN.safeTransferFrom(msg.sender, address(this), _amount);
+        totalPrize += _amount;
+        emit PrizeIncome(msg.sender, _amount);
         return true;
     }
 
-    function preSettlement() external onlyOperator 
-    {
+    function preSettlement() external onlyOwner {
         setNewEpochId();
         genLuckyNumber();
     }
 
-    function setNewEpochId() private onlyOperator
-    {
-        epochId = epochId.add(1);
+    function setNewEpochId() private {
+        epochId += 1;
     }
 
-    function genLuckyNumber() private onlyOperator
-    {
-        require(epochInfo[epochId].isUsed == false, "RANDOM_NUMBER_WAS_EXISTED");
+    function genLuckyNumber() private onlyOwner {
+        require(
+            epochInfo[epochId].isUsed == false,
+            "RANDOM_NUMBER_WAS_EXISTED"
+        );
         RANDOM_NUMBER.genRandomNumber(epochId);
     }
 
@@ -166,17 +171,18 @@ contract DegisBar is LibOwnable ,DegisStorage{
     }
 
     // 开奖
-    function settlement() external onlyOperator  {
+    function settlement() external onlyOwner {
         require(closed, "MUST_CLOSE_BEFORE_SETTLEMENT");
         require(epochInfo[epochId].isDrawed == false, "EPOCH_WAS_DRAWED");
         setLuckyNumber();
         require(epochInfo[epochId].isUsed == true, "LUCK_NUMBER_NOT_READY");
+
         epochInfo[epochId].isDrawed = true;
         currentRandom = epochInfo[epochId].randomNumber;
 
         uint256 winnerCode = uint256(currentRandom.mod(maxDigital));
 
-        uint256 prizePool = usdcPoolInfo.prizePool;
+        uint256 prizePool = (totalPrize * 6) / 10;
 
         address[] memory winners;
 
@@ -186,29 +192,25 @@ contract DegisBar is LibOwnable ,DegisStorage{
             winners = new address[](indexCodeMap[winnerCode].addrCount);
             amounts = new uint256[](indexCodeMap[winnerCode].addrCount);
 
-            uint256 winnerStakeAmountTotal = 0;
+            uint256 winnerTicketAmountTotal = 0;
+
+            // 共有多少人有这个winnercode
             for (uint256 i = 0; i < indexCodeMap[winnerCode].addrCount; i++) {
                 winners[i] = indexCodeMap[winnerCode].indexAddressMap[i];
-                winnerStakeAmountTotal = winnerStakeAmountTotal.add(
-                    userInfoMap[winners[i]].codeAmountMap[winnerCode]
-                );
+                winnerTicketAmountTotal += userInfoMap[winners[i]]
+                    .codeAmountMap[winnerCode];
             }
 
             for (uint256 j = 0; j < indexCodeMap[winnerCode].addrCount; j++) {
                 amounts[j] = prizePool
                     .mul(userInfoMap[winners[j]].codeAmountMap[winnerCode])
-                    .div(winnerStakeAmountTotal);
+                    .div(winnerTicketAmountTotal);
                 userInfoMap[winners[j]].prize = userInfoMap[winners[j]]
                     .prize
                     .add(amounts[j]);
             }
 
-            usdcPoolInfo.demandDepositPool = usdcPoolInfo.demandDepositPool.add(
-                prizePool
-            );
-
-            usdcPoolInfo.prizePool = 0;
-
+            totalPrize -= prizePool;
         } else {
             winners = new address[](1);
             winners[0] = address(0);
@@ -220,45 +222,37 @@ contract DegisBar is LibOwnable ,DegisStorage{
         emit LotteryResult(epochId, winnerCode, prizePool, winners, amounts);
     }
 
-
-
     /// --------------运维--------------------------
 
     /// @dev This function is called regularly by the robot every 6 morning to open betting.
-    function open() external  onlyOperator {
+    function open() external onlyOwner {
         closed = false;
     }
 
     /// @dev This function is called regularly by the robot on 4 nights a week to close bets.
-    function close() external onlyOperator {
+    function close() external onlyOwner {
         closed = true;
     }
 
     /// @dev The settlement robot calls this function daily to update the capital pool and settle the pending refund.
-    function update() external onlyOperator  {
-        require(
-            usdcPoolInfo.demandDepositPool <= getBalance(USDC_TOKEN),
-            "SC_BALANCE_ERROR"
-        );
+    function update() external onlyOwner {
+        require(totalPrize <= getBalance(USDC_TOKEN), "SC_BALANCE_ERROR");
 
-        require(
-            degisPoolInfo.demandDepositPool <= getBalance(DEGIS_TOKEN),
-            "SC_BALANCE_ERROR"
-        );
+        require(totalTickets <= getBalance(DEGIS_TOKEN), "SC_BALANCE_ERROR");
 
         updateBalance();
     }
 
     /// @dev The owner calls this function to set the operator address.
     /// @param op This is operator address.
-    function setOperator(address op) external onlyOwner  {
+    function setOperator(address op) external onlyOwner {
         require(op != address(0), "INVALID_ADDRESS");
         operator = op;
     }
 
     /// @dev Owner calls this function to modify the number of lucky draw digits, and the random number takes the modulus of this number.
     /// @param max New value.
-    function setMaxDigital(uint256 max) external onlyOwner  {
+    function setMaxDigital(uint256 max) external onlyOwner {
         require(max > 0, "MUST_GREATER_THAN_ZERO");
         maxDigital = max;
     }
@@ -269,34 +263,59 @@ contract DegisBar is LibOwnable ,DegisStorage{
         view
         returns (uint256[] memory codes, uint256[] memory amounts)
     {
-        uint256 cnt = userInfoMap[user].codeCount;
-        codes = new uint256[](cnt);
-        amounts = new uint256[](cnt);
-        // exits = new uint256[](cnt);
-        for (uint256 i = 0; i < cnt; i++) {
+        uint256 code_amount = userInfoMap[user].codeCount;
+
+        codes = new uint256[](code_amount);
+        amounts = new uint256[](code_amount);
+
+        for (uint256 i = 0; i < code_amount; i++) {
             codes[i] = userInfoMap[user].indexCodeMap[i];
             amounts[i] = userInfoMap[user].codeAmountMap[codes[i]];
-            // exits[i] = pendingRedeemSearchMap[user][codes[i]];
         }
     }
 
-    function getEpochId() external view returns(uint256)
-    {
+    function getEpochId() external view returns (uint256) {
         return epochId;
     }
 
-    function getEpochInfo(uint256 epochId) external view returns(uint256,bool,bool)
+    function getEpochInfo(uint256 epochId)
+        external
+        view
+        returns (
+            uint256,
+            bool,
+            bool
+        )
     {
-        return (epochInfo[epochId].randomNumber,epochInfo[epochId].isUsed,epochInfo[epochId].isDrawed);
+        return (
+            epochInfo[epochId].randomNumber,
+            epochInfo[epochId].isUsed,
+            epochInfo[epochId].isDrawed
+        );
     }
 
-    function getUserPrize(address user) external view onlyOperator returns (uint256)  {
-        uint256 totalAmount = userInfoMap[user].prize;
-        return totalAmount;
+    function getUserPrize(address user)
+        external
+        view
+        onlyOwner
+        returns (uint256)
+    {
+        uint256 prize = userInfoMap[user].prize;
+        return prize;
     }
 
-    function getLuckyNumber(uint256 _epochId) external view onlyOperator returns (uint256) {
-        require(epochInfo[_epochId].isUsed == true, "LUCK_NUMBER_NOT_READY");
+    function getMyPrzie() external view returns (uint256) {
+        uint256 prize = userInfoMap[msg.sender].prize;
+        return prize;
+    }
+
+    function getLuckyNumber(uint256 _epochId)
+        external
+        view
+        onlyOwner
+        returns (uint256)
+    {
+        require(epochInfo[_epochId].isUsed == true, "LUCKY_NUMBER_NOT_READY");
         return epochInfo[_epochId].randomNumber;
     }
 
@@ -305,7 +324,7 @@ contract DegisBar is LibOwnable ,DegisStorage{
         private
         view
     {
-        //require(tx.origin == msg.sender, "NOT_ALLOW_SMART_CONTRACT");
+        require(tx.origin == msg.sender, "NOT_ALLOW_SMART_CONTRACT");
         require(
             codes.length == amounts.length,
             "CODES_AND_AMOUNTS_LENGTH_NOT_EUQAL"
@@ -322,7 +341,10 @@ contract DegisBar is LibOwnable ,DegisStorage{
 
         //check codes
         for (uint256 i = 0; i < length; i++) {
-            require(userInfoMap[msg.sender].codeIndexMap[codes[i]] > 0, "CODE_NOT_EXIST");
+            require(
+                userInfoMap[msg.sender].codeIndexMap[codes[i]] > 0,
+                "CODE_NOT_EXIST"
+            );
             require(codes[i] < maxDigital, "OUT_OF_MAX_DIGITAL");
             for (uint256 m = i + 1; m < length; m++) {
                 require(codes[i] != codes[m], "CODES_MUST_NOT_SAME");
@@ -334,16 +356,23 @@ contract DegisBar is LibOwnable ,DegisStorage{
 
     /// @dev Remove user info map.
     function removeUserCodesMap(uint256 codeToRemove, address user) private {
-        require(userInfoMap[user].codeIndexMap[codeToRemove] > 0, "CODE_NOT_EXIST");
+        require(
+            userInfoMap[user].codeIndexMap[codeToRemove] > 0,
+            "CODE_NOT_EXIST"
+        );
         require(userInfoMap[user].codeCount != 0, "CODE_COUNT_IS_ZERO");
 
         if (userInfoMap[user].codeCount > 1) {
             // get code index in map
             uint256 i = userInfoMap[user].codeIndexMap[codeToRemove] - 1;
             // save last element to index position
-            userInfoMap[user].indexCodeMap[i] = userInfoMap[user].indexCodeMap[userInfoMap[user].codeCount - 1];
+            userInfoMap[user].indexCodeMap[i] = userInfoMap[user].indexCodeMap[
+                userInfoMap[user].codeCount - 1
+            ];
             // update index of swap element
-            userInfoMap[user].codeIndexMap[userInfoMap[user].indexCodeMap[i]] = i + 1;
+            userInfoMap[user].codeIndexMap[userInfoMap[user].indexCodeMap[i]] =
+                i +
+                1;
         }
 
         // remove the index of record
@@ -355,17 +384,25 @@ contract DegisBar is LibOwnable ,DegisStorage{
     }
 
     function removeCodeInfoMap(uint256 code, address user) private {
-        require(indexCodeMap[code].addressIndexMap[user] > 0, "CODE_NOT_EXIST_2");
+        require(
+            indexCodeMap[code].addressIndexMap[user] > 0,
+            "CODE_NOT_EXIST_2"
+        );
         require(indexCodeMap[code].addrCount != 0, "ADDRESS_COUNT_IS_ZERO");
 
         if (indexCodeMap[code].addrCount > 1) {
             uint256 i = indexCodeMap[code].addressIndexMap[user] - 1;
-            indexCodeMap[code].indexAddressMap[i] = indexCodeMap[code].indexAddressMap[indexCodeMap[code].addrCount - 1];
-            indexCodeMap[code].addressIndexMap[indexCodeMap[code].indexAddressMap[i]] = i + 1;
+            indexCodeMap[code].indexAddressMap[i] = indexCodeMap[code]
+                .indexAddressMap[indexCodeMap[code].addrCount - 1];
+            indexCodeMap[code].addressIndexMap[
+                indexCodeMap[code].indexAddressMap[i]
+            ] = i + 1;
         }
 
         indexCodeMap[code].addressIndexMap[user] = 0;
-        indexCodeMap[code].indexAddressMap[indexCodeMap[code].addrCount - 1] = address(0);
+        indexCodeMap[code].indexAddressMap[
+            indexCodeMap[code].addrCount - 1
+        ] = address(0);
         indexCodeMap[code].addrCount = indexCodeMap[code].addrCount.sub(1);
     }
 
@@ -375,6 +412,7 @@ contract DegisBar is LibOwnable ,DegisStorage{
     {
         uint256 totalAmount = 0;
 
+        // total amount to be redeemed
         for (uint256 i = 0; i < codes.length; i++) {
             totalAmount = totalAmount.add(
                 userInfoMap[user].codeAmountMap[codes[i]]
@@ -383,15 +421,13 @@ contract DegisBar is LibOwnable ,DegisStorage{
 
         require(totalAmount > 0, "REDEEM_TOTAL_AMOUNT_SHOULD_NOT_ZERO");
 
-        if (totalAmount <= degisPoolInfo.demandDepositPool) {
+        if (totalAmount <= totalTickets) {
             require(
-                degisPoolInfo.demandDepositPool <= getBalance(DEGIS_TOKEN),
+                totalTickets <= getBalance(DEGIS_TOKEN),
                 "SC_BALANCE_ERROR"
             );
 
-            degisPoolInfo.demandDepositPool = degisPoolInfo.demandDepositPool.sub(
-                totalAmount
-            );
+            totalTickets -= totalAmount;
 
             for (uint256 m = 0; m < codes.length; m++) {
                 userInfoMap[user].codeAmountMap[codes[m]] = 0;
@@ -407,41 +443,31 @@ contract DegisBar is LibOwnable ,DegisStorage{
     }
 
     function prizeWithdrawAddress(address user) private returns (bool) {
-        uint256 totalAmount = userInfoMap[user].prize;
-        if (totalAmount <= usdcPoolInfo.demandDepositPool) {
-            require(
-                usdcPoolInfo.demandDepositPool <= getBalance(USDC_TOKEN),
-                "SC_BALANCE_ERROR"
-            );
+        uint256 user_prize = userInfoMap[user].prize;
+        if (user_prize <= totalPrize) {
+            require(totalPrize <= getBalance(USDC_TOKEN), "SC_BALANCE_ERROR");
 
-            usdcPoolInfo.demandDepositPool = usdcPoolInfo.demandDepositPool.sub(
-                totalAmount
-            );
+            totalPrize -= user_prize;
 
             userInfoMap[user].prize = 0;
 
-            USDC_TOKEN.safeTransfer(user, totalAmount);
-            emit PrizeWithdraw(msg.sender, true, totalAmount);
+            USDC_TOKEN.safeTransfer(user, user_prize);
+            emit PrizeWithdraw(msg.sender, true, user_prize);
             return true;
         }
         return false;
     }
 
     function updateBalance() private returns (bool) {
-        if (
-            getBalance(USDC_TOKEN) > usdcPoolInfo.demandDepositPool
-        ) {
-            usdcPoolInfo.prizePool = getBalance(USDC_TOKEN).sub(
-                     usdcPoolInfo.demandDepositPool
-            );
+        if (getBalance(USDC_TOKEN) > totalPrize) {
+            totalPrize = getBalance(USDC_TOKEN);
             return true;
         }
 
         return false;
     }
 
-    function getBalance(IERC20 token) private view returns(uint256)
-    {
+    function getBalance(IERC20 token) private view returns (uint256) {
         return token.balanceOf(address(this));
     }
 
