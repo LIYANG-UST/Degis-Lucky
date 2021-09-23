@@ -5,14 +5,13 @@ import "./lib/SafeMath.sol";
 import "./lib/Types.sol";
 import "./lib/LibOwnable.sol";
 
-
 contract DegisStorage is LibOwnable, Types {
     using SafeMath for uint256;
 
     uint256 public constant DIVISOR = 1000;
 
     uint256 public epochId = 0;
-    
+
     /// @dev max count of user code in one address.
     uint256 public maxCount = 50;
 
@@ -37,7 +36,8 @@ contract DegisStorage is LibOwnable, Types {
     mapping(uint256 => PendingRedeem) public pendingRedeemMap;
 
     /// @dev map: userAddress => redeemCode => 0:user not redeem, 1:user is Redeeming
-    mapping(address => mapping(uint256 => uint256)) public pendingRedeemSearchMap;
+    mapping(address => mapping(uint256 => uint256))
+        public pendingRedeemSearchMap;
 
     //------Data for pending prize out-----------------------
     uint256 public pendingPrizeWithdrawStartIndex;
@@ -61,16 +61,10 @@ contract DegisStorage is LibOwnable, Types {
     /// @dev The amount of waiting delegate out amount
     uint256 public delegateOutAmount;
 
-    PoolInfo public degisPoolInfo;
-    PoolInfo public usdcPoolInfo;
-
     SubsidyInfo public subsidyInfo;
 
     /// @dev map: subsidyAddress => subsidyAmount
     mapping(address => uint256) public subsidyAmountMap;
-
-    /// @dev Share a portion of the prize pool to own as an operating expense, 0 by default.
-    uint256 public feeRate = 0;
 
     address public operator;
 
