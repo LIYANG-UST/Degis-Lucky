@@ -54,15 +54,13 @@ interface IDegisLottery {
      * @dev Callable by operator
      * @param _endTime: endTime of the lottery
      * @param _priceTicketInCake: price of a ticket in CAKE
-     * @param _discountDivisor: the divisor to calculate the discount magnitude for bulks
      * @param _rewardsBreakdown: breakdown of rewards per bracket (must sum to 10,000)
      * @param _treasuryFee: treasury fee (10,000 = 100%, 100 = 1%)
      */
     function startLottery(
         uint256 _endTime,
         uint256 _priceTicketInCake,
-        uint256 _discountDivisor,
-        uint256[6] calldata _rewardsBreakdown,
+        uint256[4] calldata _rewardsBreakdown,
         uint256 _treasuryFee
     ) external;
 

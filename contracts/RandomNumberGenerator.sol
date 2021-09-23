@@ -2,8 +2,9 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@chainlink/contracts/src/v0.8/dev/VRFConsumerBase.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./interfaces/IRandomNumberGenerator.sol";
+import "./interfaces/IDegisLottery.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract RandomNumberGenerator is
@@ -28,22 +29,24 @@ contract RandomNumberGenerator is
      * @param _vrfCoordinator: address of the VRF coordinator
      * @param _linkToken: address of the LINK token
      */
-    constructor(address _vrfCoordinator, address _linkToken)
-        VRFConsumerBase(_vrfCoordinator, _linkToken)
-    {
-        //
+    constructor(
+        address _vrfCoordinator,
+        address _linkToken,
+        bytes32 _keyHash
+    ) VRFConsumerBase(_vrfCoordinator, _linkToken) {
+        keyHash = _keyHash;
+        fee = 0.1 * 10e18;
     }
 
     /**
-     * @notice Request randomness from a user-provided seed
-     * @param _seed: seed provided by the Degis lottery
+     * @notice Request randomness from Chainlink VRF
      */
-    function getRandomNumber(uint256 _seed) external override {
+    function getRandomNumber() external override {
         require(msg.sender == DegisLottery, "Only DegisLottery");
         require(keyHash != bytes32(0), "Must have valid key hash");
         require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK tokens");
 
-        latestRequestId = requestRandomness(keyHash, fee, _seed);
+        latestRequestId = requestRandomness(keyHash, fee);
     }
 
     /**
@@ -67,7 +70,7 @@ contract RandomNumberGenerator is
      * @param _degisLottery: address of the PancakeSwap lottery
      */
     function setLotteryAddress(address _degisLottery) external onlyOwner {
-        DegisLottery = _degisSwapLottery;
+        DegisLottery = _degisLottery;
     }
 
     /**

@@ -1,13 +1,13 @@
 const Web3 = require("web3");
 const HDWalletProvider = require("@truffle/hdwallet-provider");
-require('dotenv').config()
-const protocol = "https";
-const ip = "api.avax-test.network";
-const port = 9650;
-const provider = new Web3.providers.HttpProvider(
-  `${protocol}://${ip}/ext/bc/C/rpc`
-);
-const mnemonic = process.env.MNEMONIC
+const dotenv = require('dotenv')
+const result = dotenv.config();
+if (result.error) {
+  throw result.error;
+}
+console.log(result.parsed);
+var mnemonic = process.env.mnemonic;
+var infuraKey = process.env.infuraKey;
 
 module.exports = {
   networks: {
@@ -30,11 +30,21 @@ module.exports = {
       port: 7545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
     },  
+  
+    rinkeby: {
+      provider: () => new HDWalletProvider(mnemonic, 'wss://rinkeby.infura.io/ws/v3/' + infuraKey),
+      network_id: 4,       // Rinkeby's id
+      gas: 5500000,        // Ropsten has a lower block limit than mainnet
+      confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+      networkCheckTimeout: 1000000000,
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
+    }
   },
 
   compilers: {
     solc: {
-      version: '^0.8.0',
+      version: '0.8.5',
       settings: {
         optimizer: {
           enabled: true, // Default: false

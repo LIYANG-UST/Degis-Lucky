@@ -4,7 +4,7 @@ interface IRandomNumberGenerator {
     /**
      * Requests randomness from a user-provided seed
      */
-    function getRandomNumber(uint256 _seed) external;
+    function getRandomNumber() external;
 
     /**
      * View latest lotteryId numbers
