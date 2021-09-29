@@ -17,7 +17,7 @@
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "dotenv": "^10.0.0",
-    "web3": "1.3.4"
+    "web3": "^1.3.4"
   },
   "main": "truffle-config.js",
   "scripts": {

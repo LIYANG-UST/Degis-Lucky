@@ -4,11 +4,18 @@ pragma solidity ^0.8.0;
 interface IDegisLottery {
     /**
      * @notice Buy tickets for the current lottery
-     * @param _lotteryId: lotteryId
-     * @param _ticketNumbers: array of ticket numbers between 1,000,000 and 1,999,999
+     * @param _ticketNumbers: array of ticket numbers between 10,000 and 19,999
      * @dev Callable by users
      */
-    function buyTickets(uint256 _lotteryId, uint32[] calldata _ticketNumbers)
+    function buyTickets(uint32[] calldata _ticketNumbers)
+        external;
+
+    /**
+     * @notice Redeem tickets for all lottery
+     * @param _ticketIds: array of ticket ids
+     * @dev Callable by users
+     */
+    function redeemTickets(uint256[] calldata _ticketIds)
         external;
 
     /**
