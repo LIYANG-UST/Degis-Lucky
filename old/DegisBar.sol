@@ -23,9 +23,6 @@ contract DegisBar is LibOwnable, DegisStorage {
     IDegisTicket degisTicket;
     IRandomNumber randomGenerator;
 
-    IERC20 USDC_TOKEN;
-    IERC20 Degis_TOKEN;
-
     address randomNumberAddress;
 
     uint256 totalTickets;
