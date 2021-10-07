@@ -263,43 +263,6 @@ contract DegisLottery is ReentrancyGuard, IDegisLottery, Ownable {
         emit TicketsPurchase(msg.sender, currentLotteryId, _ticketNumbers.length);
     }
 
-    function redeemTickets(uint256 _lotteryId, uint256[] calldata _ticketIds)
-        external
-    {
-        require(_ticketIds.length != 0, "no ticketIds given");
-
-        uint256 userTikcetAmount = _userTicketIdsPerLotteryId[msg.sender][
-            _lotteryId
-        ].length;
-
-        require(
-            _ticketIds.length <= userTikcetAmount,
-            "too many tickets to redeem"
-        );
-
-        require(
-            block.timestamp > _lotteries[_lotteryId].endTime,
-            "sorry, current lottery is not over"
-        );
-
-        for (uint256 i = 0; i < _ticketIds.length; i++) {
-            uint32 currentTicketNumber = _tickets[_ticketIds[i]].number;
-            // used when drawing the prize
-            _numberTicketsPerLotteryId[_lotteryId][
-                1 + (currentTicketNumber % 10)
-            ]--;
-            _numberTicketsPerLotteryId[_lotteryId][
-                11 + (currentTicketNumber % 100)
-            ]--;
-            _numberTicketsPerLotteryId[_lotteryId][
-                111 + (currentTicketNumber % 1000)
-            ]--;
-            _numberTicketsPerLotteryId[_lotteryId][
-                1111 + (currentTicketNumber % 10000)
-            ]--;
-        }
-    }
-
     /**
      * @notice Redeem tickets for all lottery
      * @param _ticketIds: array of ticket ids
@@ -330,7 +293,7 @@ contract DegisLottery is ReentrancyGuard, IDegisLottery, Ownable {
         {
             uint256 thisTicketId = _ticketIds[i];
             require(
-                _lotteries[currentLotteryId].firstTicketIdNextLottery > thisTicketId,
+                currentTicketId > thisTicketId,
                 "ticketId is too large"
             );
             require(
@@ -343,11 +306,11 @@ contract DegisLottery is ReentrancyGuard, IDegisLottery, Ownable {
             );
             require( 
                 _tickets[thisTicketId].isRedeemed == false,
-                "ticket has been Redeemed"
+                "ticket has been redeemed"
             );
 
             _tickets[thisTicketId].isRedeemed = true;
-            _tickets[thisTicketId].redeemLotteryId = currentTicketId;
+            _tickets[thisTicketId].redeemLotteryId = currentLotteryId;
             amountDegisToTransfer += _tickets[thisTicketId].priceTicket;
 
             uint32 currentTicketNumber = _tickets[thisTicketId].number;
@@ -492,10 +455,11 @@ contract DegisLottery is ReentrancyGuard, IDegisLottery, Ownable {
             _lotteries[_lotteryId].status == Status.Open,
             "this lottery is not open currently"
         );
-        require(
-            block.timestamp > _lotteries[_lotteryId].endTime,
-            "this lottery has not reached the end time, only can be closed after the end time"
-        );
+
+        // require(
+        //     block.timestamp > _lotteries[_lotteryId].endTime,
+        //     "this lottery has not reached the end time, only can be closed after the end time"
+        // );
 
         // Set the upper bound of this round's ticketId
         _lotteries[_lotteryId].firstTicketIdNextLottery = currentTicketId;
@@ -661,11 +625,18 @@ contract DegisLottery is ReentrancyGuard, IDegisLottery, Ownable {
             "the lottery round is not open, choose the right round"
         );
 
+        // Transfer degis tokens to this contract (need approval)
+        USDCToken.safeTransferFrom(
+            address(msg.sender),
+            address(this),
+            _amount
+        );
+
         uint256 USDC_Balance = USDCToken.balanceOf(address(this));
         require(
             _lotteries[_lotteryId].amountCollected + _amount == USDC_Balance,
             "the amount is wrong"
-        );
+        ); 
 
         _lotteries[_lotteryId].amountCollected += _amount;
 
@@ -716,11 +687,11 @@ contract DegisLottery is ReentrancyGuard, IDegisLottery, Ownable {
 
         currentLotteryId++;
         
-        for (uint32 i = MIN_TICKET_NUMBER; i <= MAX_TICKET_NUMBER; i++) {
-            if(_numberTicketsPerLotteryId[currentLotteryId-1][i] != 0) {
-                _numberTicketsPerLotteryId[currentLotteryId][i] = _numberTicketsPerLotteryId[currentLotteryId-1][i];
-            }
-        }
+        // for (uint32 i = 0; i <= 11110; i++) {
+        //     if(_numberTicketsPerLotteryId[currentLotteryId-1][i] != 0) {
+        //         _numberTicketsPerLotteryId[currentLotteryId][i] = _numberTicketsPerLotteryId[currentLotteryId-1][i];
+        //     }
+        // }
 
         _lotteries[currentLotteryId] = Lottery({
             status: Status.Open,

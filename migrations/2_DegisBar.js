@@ -16,7 +16,6 @@ const MockUSD = artifacts.require('lib/MockUSD');
 const RandomNumberGenerator = artifacts.require('RandomNumberGenerator');
 const DegisLottery = artifacts.require('DegisLottery');
 
-
 module.exports = async function(deployer, network) {
     await deployer.deploy(RandomNumberGenerator, RINKEBY_VRF_COORDINATOR, RINKEBY_LINKTOKEN, RINKEBY_KEYHASH);
     await deployer.deploy(DegisToken);
