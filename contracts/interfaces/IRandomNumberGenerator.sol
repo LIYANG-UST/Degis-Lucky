@@ -16,4 +16,7 @@ interface IRandomNumberGenerator {
      * Views random result
      */
     function viewRandomResult() external view returns (uint32);
+
+    //[!!!]
+    function temp() external;
 }

@@ -24,11 +24,11 @@ module.exports = async callback => {
         const lotteryInfo = await lottery.viewLottery(currentLotteryId)
         const contractMockUSDBalance = await mockUSD.balanceOf(lottery.address)
         const contractDegisBalance = await degisToken.balanceOf(lottery.address)
-        console.log('[INFO]:', 'CONTRACT CUCCENT LOTTERY ID', currentLotteryId.toString())
+        console.log('[INFO]:', 'CONTRACT CURRENT LOTTERY ID', currentLotteryId.toString())
         console.log('[INFO]:', 'CONTRACT CURRENT LOTTERY STATUS', lotteryInfo.status)
         console.log('[INFO]:', 'CONTRACT DEGIS BALANCE', web3.utils.fromWei(contractDegisBalance.toString()))
         console.log('[INFO]:', 'CONTRACT USD BALANCE', web3.utils.fromWei(contractMockUSDBalance.toString()))
-
+        
         console.log("----------- End inject funds -------------") 
         callback(true)
     }

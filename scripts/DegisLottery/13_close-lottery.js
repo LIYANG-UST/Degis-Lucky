@@ -14,18 +14,17 @@ module.exports = async callback => {
       const degisToken = await DegisToken.deployed()
       const mockUSD = await MockUSD.deployed()
       const lottery = await DegisLottery.deployed()
-      const rand = await RandomNumberGenerator.deployed()
-
+      const rand = await RandomNumberGenerator.deployed()      
       rand.setLotteryAddress(lottery.address)
       let address = (await web3.eth.getAccounts())[0]
       const currentLotteryId = await lottery.viewCurrentLotteryId()      
-      const tx1 = await lottery.closeLottery(currentLotteryId,{from:address})
+      const tx1 = await lottery.closeLottery(currentLotteryId, {from:address})
       console.log(tx1.tx)
 
       const lotteryInfo = await lottery.viewLottery(currentLotteryId)
       const contractMockUSDBalance = await mockUSD.balanceOf(lottery.address)
       const contractDegisBalance = await degisToken.balanceOf(lottery.address)
-      console.log('[INFO]:', 'CONTRACT CUCCENT LOTTERY ID', currentLotteryId.toString())
+      console.log('[INFO]:', 'CONTRACT CURRENT LOTTERY ID', currentLotteryId.toString())
       console.log('[INFO]:', 'CONTRACT CURRENT LOTTERY STATUS', lotteryInfo.status)
       console.log('[INFO]:', 'CONTRACT DEGIS BALANCE', web3.utils.fromWei(contractDegisBalance.toString()))
       console.log('[INFO]:', 'CONTRACT USD BALANCE', web3.utils.fromWei(contractMockUSDBalance.toString()))
