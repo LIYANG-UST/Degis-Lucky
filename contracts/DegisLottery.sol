@@ -28,8 +28,8 @@ contract DegisLottery is ReentrancyGuard, IDegisLottery, Ownable {
 
     uint256 public pendingInjectionNextLottery;
 
-    uint256 public constant MIN_LENGTH_LOTTERY = 4 hours - 5 minutes; // 4 hours
-    uint256 public constant MAX_LENGTH_LOTTERY = 7 days + 5 minutes; // 7 days
+    uint256 public constant MIN_LENGTH_LOTTERY = 1 hours - 5 minutes; // 1 hours
+    uint256 public constant MAX_LENGTH_LOTTERY = 365 days + 5 minutes; // 365 days
     uint256 public constant MAX_TREASURY_FEE = 3000; // 30%
     uint32 public constant MIN_TICKET_NUMBER = 10000;
     uint32 public constant MAX_TICKET_NUMBER = 19999;
@@ -479,16 +479,13 @@ contract DegisLottery is ReentrancyGuard, IDegisLottery, Ownable {
             "this lottery is not open currently"
         );
 
-        // [!!!]
-        // require(
-        //     block.timestamp > _lotteries[_lotteryId].endTime,
-        //     "this lottery has not reached the end time, only can be closed after the end time"
-        // );
+        require(
+            block.timestamp > _lotteries[_lotteryId].endTime,
+            "this lottery has not reached the end time, only can be closed after the end time"
+        );
 
-        // [!!!]
         // Request a random number from the generator
-        //randomGenerator.getRandomNumber();
-        randomGenerator.temp();
+        randomGenerator.getRandomNumber();
 
         // Update the lottery status to "Close"
         _lotteries[_lotteryId].status = Status.Close;
@@ -907,13 +904,13 @@ contract DegisLottery is ReentrancyGuard, IDegisLottery, Ownable {
         );
 
         // Check ticketId is within range
-        // if (
-        //     (_tickets[_ticketId].buyLotteryId > _lotteryId) || 
-        //     (_tickets[_ticketId].isRedeemed == true && (_tickets[_ticketId].redeemLotteryId <= _lotteryId)) || 
-        //     (_ticketsClaimed[_ticketId][_lotteryId] == true)
-        // ) {
-        //     return 0;
-        // }
+        if (
+            (_tickets[_ticketId].buyLotteryId > _lotteryId) || 
+            (_tickets[_ticketId].isRedeemed == true && (_tickets[_ticketId].redeemLotteryId <= _lotteryId)) || 
+            (_ticketsClaimed[_ticketId][_lotteryId] == true)
+        ) {
+            return 0;
+        }
 
         return _calculateRewardsForTicketId(_lotteryId, _ticketId);
     }

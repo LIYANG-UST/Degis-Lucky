@@ -22,7 +22,7 @@ module.exports = async callback => {
 		
 			// start lottery
 			let timestamp = new Date().getTime();
-	    timestamp = parseInt(timestamp / 1000 + 14400); // 4h
+	    timestamp = parseInt(timestamp / 1000 + 3600); // 1h
 			// console.log("end time stamp:", timestamp)
 
 			const tx1 = await lottery.startLottery(

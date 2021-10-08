@@ -112,17 +112,4 @@ contract RandomNumberGenerator is
         randomResult = uint32(10000 + (randomness % 10000));
         latestLotteryId = IDegisLottery(DegisLottery).viewCurrentLotteryId();
     }
-
-    //[!!!]
-    /**
-     * @notice Callback function used by ChainLink's VRF Coordinator
-     */
-    function temp()
-        external
-        override
-    {
-        randomResult = uint32(10000 + (12345 % 10000));
-        latestLotteryId = IDegisLottery(DegisLottery).viewCurrentLotteryId();
-    }
-
 }
