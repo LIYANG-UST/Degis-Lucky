@@ -52,7 +52,7 @@ module.exports = async callback => {
       console.log("----------- Start support LINK -------------") 
       const linkAddress = "0x01BE23585060835E02B77ef475b0Cc51aA1e0709"
       const linkToken = await LinkTokenInterface.at(linkAddress)
-      amount = web3.utils.toWei('1','ether')
+      amount = web3.utils.toWei('5','ether')
       await linkToken.transfer(rand.address, amount, {from: user0})
       contractLinkBalance = await linkToken.balanceOf(rand.address)
       console.log('[INFO]:', 'CONTRACT(RANDOM) LINK BALANCE', web3.utils.fromWei(contractLinkBalance.toString()))

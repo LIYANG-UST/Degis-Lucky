@@ -42,7 +42,7 @@ module.exports = async callback => {
 			console.log('[INFO]:', 'CONTRACT CURRENT LOTTERY STATUS', lotteryInfo.status)
 			console.log('[INFO]:', 'CONTRACT DEGIS BALANCE', web3.utils.fromWei(contractDegisBalance.toString()))
 			console.log('[INFO]:', 'CONTRACT USD BALANCE', web3.utils.fromWei(contractMockUSDBalance.toString()))
-
+			console.log("----------- End new lottery -------------") 
 			callback(true)
   	}
   	catch (err) {

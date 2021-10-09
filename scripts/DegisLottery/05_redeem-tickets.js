@@ -24,7 +24,7 @@ function showticket(ticketsResponse) {
 
 module.exports = async callback => {
   	try {
-		console.log("----------- Start first redeem -------------") 
+		console.log("----------- Start redeem -------------") 
     	const degisToken = await DegisToken.deployed()
   		const lottery = await DegisLottery.deployed()
   		const rand = await RandomNumberGenerator.deployed()
@@ -58,7 +58,7 @@ module.exports = async callback => {
         console.log('[INFO]:', 'CONTRACT DEGIS BALANCE', web3.utils.fromWei(contractDegisBalance.toString()))
         console.log('[INFO]:', 'USER1 DEGIS BALANCE', web3.utils.fromWei(user1DegisTokenBalance.toString()))
         console.log('[INFO]:', 'USER2 DEGIS BALANCE', web3.utils.fromWei(user2DegisTokenBalance.toString()))
-        console.log("----------- End first redeem -------------") 
+        console.log("----------- End redeem -------------") 
 		callback(true)
   	}
   	catch (err) {

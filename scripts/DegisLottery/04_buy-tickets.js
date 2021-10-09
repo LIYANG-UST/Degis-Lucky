@@ -23,7 +23,7 @@ function showticket(ticketsResponse) {
 
 module.exports = async callback => {
   	try {
-		console.log("----------- Start first buy ticktes -------------") 
+		console.log("----------- Start buy ticktes -------------") 
   		const degisToken = await DegisToken.deployed()
   		const lottery = await DegisLottery.deployed()
 		const address = await web3.eth.getAccounts()
@@ -70,7 +70,7 @@ module.exports = async callback => {
         console.log('[INFO]:', 'USER1 DEGIS BALANCE', web3.utils.fromWei(user1DegisTokenBalance.toString()))
         console.log('[INFO]:', 'USER2 DEGIS BALANCE', web3.utils.fromWei(user2DegisTokenBalance.toString()))
 
-        console.log("----------- End first buy ticktes -------------")
+        console.log("----------- End buy ticktes -------------")
 		callback(true)
   	}
   	catch (err) {
