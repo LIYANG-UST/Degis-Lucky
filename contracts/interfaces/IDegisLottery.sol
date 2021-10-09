@@ -22,13 +22,20 @@ interface IDegisLottery {
      * @notice Claim a set of winning tickets for a lottery
      * @param _lotteryId: lottery id
      * @param _ticketIds: array of ticket ids
-     * @param _brackets: array of brackets for the ticket ids
      * @dev Callable by users only, not contract!
      */
     function claimTickets(
         uint256 _lotteryId,
-        uint256[] calldata _ticketIds,
-        uint32[] calldata _brackets
+        uint256[] calldata _ticketIds
+    ) external;
+
+    /**
+     * @notice Claim all winning tickets for a lottery
+     * @param _lotteryId: lottery id
+     * @dev Callable by users only, not contract!
+     */
+    function claimAllTickets(
+        uint256 _lotteryId
     ) external;
 
     /**
